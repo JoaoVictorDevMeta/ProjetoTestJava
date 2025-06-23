@@ -86,4 +86,16 @@ public class DenunciaService {
             userInfoRepository.save(denunciante);
         }
     }
+
+    public void aprovarSeloVerificado(String cpf) {
+        UserInfo user = userInfoRepository.findByCpf(cpf)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado!"));
+
+        if ("sim".equalsIgnoreCase(user.getSeloVerificado())) {
+            throw new RuntimeException("Usuário já possui selo verificado.");
+        }
+
+        user.setSeloVerificado("sim");
+        userInfoRepository.save(user);
+    }
 }

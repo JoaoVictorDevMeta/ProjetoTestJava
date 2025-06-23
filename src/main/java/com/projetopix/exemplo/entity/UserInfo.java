@@ -21,6 +21,9 @@ public class UserInfo {
     private String password;
 
     @Column(nullable = false)
+    private String seloVerificado;
+
+    @Column(nullable = false)
     private String dataNascimento;
     private String name;
     private String roles;
@@ -33,7 +36,6 @@ public class UserInfo {
     private Double score;
     private String segundaSenha;
     private String chaveDeposito;
-    private String seloVerificado;
     private Double percentualSeguranca;
 
     public void setBloqueado(Boolean bloqueado) {

@@ -1,6 +1,7 @@
 package com.projetopix.exemplo.service;
 
 import com.projetopix.exemplo.entity.UserInfo;
+import com.projetopix.exemplo.repository.DenunciaRepository;
 import com.projetopix.exemplo.repository.TransactionRepository;
 import com.projetopix.exemplo.exception.UserAlreadyExistsException;
 import com.projetopix.exemplo.dto.ConsultaResponse;
@@ -23,6 +24,7 @@ public class UserInfoService {
     private final UserInfoRepository repository;
     private final PasswordEncoder encoder;
     private final TransactionRepository transactionRepository;
+    private final DenunciaRepository denunciaRepository;
 
     public String addUser(UserInfo userInfo) {
         if (repository.findByCpf(userInfo.getCpf()).isPresent()) {
@@ -67,5 +69,34 @@ public class UserInfoService {
 
         // Busca transações onde o usuário é remetente ou destinatário
         return transactionRepository.findByRemetenteOrDestinatario(user, user);
+    }
+
+    public String pedirSeloVerificado() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String cpf = auth.getName();
+        UserInfo user = repository.findByCpf(cpf)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        if ("sim".equalsIgnoreCase(user.getSeloVerificado())) {
+            return "Usuário já possui selo verificado.";
+        }
+
+        long qtdTransacoes = transactionRepository.findByRemetenteOrDestinatario(user, user).size();
+        if (qtdTransacoes < 20) {
+            return "Usuário precisa de pelo menos 20 transações para solicitar o selo.";
+        }
+
+        // Use o repository para buscar denúncias aprovadas
+        boolean temDenunciaAprovada = !denunciaRepository
+                .findByDenunciadoCpfAndStatus(user.getCpf(), "aprovada")
+                .isEmpty();
+
+        if (temDenunciaAprovada) {
+            return "Usuário não pode solicitar selo pois possui denúncia aprovada.";
+        }
+
+        user.setSeloVerificado("sim");
+        repository.save(user);
+        return "Selo verificado concedido!";
     }
 }

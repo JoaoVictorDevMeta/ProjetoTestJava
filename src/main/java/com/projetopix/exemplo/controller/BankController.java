@@ -56,4 +56,10 @@ public class BankController {
         denunciaService.denunciar(request);
         return "Denúncia registrada com sucesso!";
     }
+
+    //pedir selo verificado
+    @PostMapping("/pedir-selo-verificado")
+    public String pedirSeloVerificado() {
+        return userInfoService.pedirSeloVerificado();
+    }
 }

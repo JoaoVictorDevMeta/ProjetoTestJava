@@ -9,4 +9,5 @@ public interface DenunciaRepository extends JpaRepository<Denuncia, Long> {
     List<Denuncia> findByDenunciadoCpf(String cpf);
     List<Denuncia> findByDenuncianteCpf(String cpf);
     List<Denuncia> findByCodigoTransacao(String codigoTransacao);
+    List<Denuncia> findByDenunciadoCpfAndStatus(String cpf, String status);
 }

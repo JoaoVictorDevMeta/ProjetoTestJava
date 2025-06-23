@@ -38,4 +38,11 @@ public class AdminController {
         denunciaService.atualizarStatusDenuncia(denunciaId, status);
         return "Status da denúncia atualizado para: " + status;
     }
+
+    //aprovar selo verificado
+    @PostMapping("/aprovar-selo-verificado")
+    public String aprovarSeloVerificado(@RequestParam String cpf) {
+        denunciaService.aprovarSeloVerificado(cpf);
+        return "Selo verificado aprovado para o usuário com CPF: " + cpf;
+    }
 }
