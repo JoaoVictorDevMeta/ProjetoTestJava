@@ -31,6 +31,12 @@ public class UserController {
 
     @PostMapping("/addNewUser")
     public String addNewUser(@RequestBody UserInfo userInfo) {
+        if (userInfo.getCpf() == null || userInfo.getCpf().isBlank()) {
+            throw new IllegalArgumentException("CPF é obrigatório!");
+        }
+        if (userInfo.getDataNascimento() == null || userInfo.getDataNascimento().isBlank()) {
+            throw new IllegalArgumentException("Data de nascimento é obrigatória!");
+        }
         return service.addUser(userInfo);
     }
 
@@ -39,10 +45,9 @@ public class UserController {
     @PostMapping("/generateToken")
     public String authenticateAndGetToken(@RequestBody AuthRequest authRequest) {
         Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword())
-        );
+                new UsernamePasswordAuthenticationToken(authRequest.getCpf(), authRequest.getPassword()));
         if (authentication.isAuthenticated()) {
-            return jwtService.generateToken(authRequest.getUsername());
+            return jwtService.generateToken(authRequest.getCpf());
         } else {
             throw new UsernameNotFoundException("Invalid user request!");
         }

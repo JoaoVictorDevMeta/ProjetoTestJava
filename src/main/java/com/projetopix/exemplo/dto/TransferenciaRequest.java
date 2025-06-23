@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class TransferenciaRequest {
-    private String cpfOrigem;
+    private String cpfRemetente;
     private String cpfDestino;
     private Double valor;
 }

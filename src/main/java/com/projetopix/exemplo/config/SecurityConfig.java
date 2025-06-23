@@ -27,7 +27,7 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService(UserInfoRepository userInfoRepository) {
-        return username -> userInfoRepository.findByEmail(username)
+        return cpf -> userInfoRepository.findByCpf(cpf)
                 .map(UserInfoDetails::new)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }

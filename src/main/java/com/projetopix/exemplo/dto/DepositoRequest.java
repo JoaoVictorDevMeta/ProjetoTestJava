@@ -4,7 +4,6 @@ import lombok.Data;
 
 @Data
 public class DepositoRequest {
-    private String cpfOrigem;
-    private String chaveDestino;
+    private String cpfDestino;
     private Double valor;
 }

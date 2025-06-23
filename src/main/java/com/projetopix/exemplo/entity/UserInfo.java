@@ -14,23 +14,33 @@ public class UserInfo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    private String name;
-    
-    @Column(unique = true)
-    private String email;
-    private String password;
-    private String roles;
-
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String cpf;
+
+    @Column(nullable = false)
+    private String password;
+
+    @Column(nullable = false)
+    private String dataNascimento;
+    private String name;
+    private String roles;
+    private Boolean bloqueado;
+
     private String tipoConta;
     private String telefone;
     private String estado;
-    private String dataNascimento;
     private Double saldo;
     private Double score;
     private String segundaSenha;
     private String chaveDeposito;
     private String seloVerificado;
     private Double percentualSeguranca;
+
+    public void setBloqueado(Boolean bloqueado) {
+        this.bloqueado = bloqueado;
+    }
+
+    public Boolean getBloqueado() {
+        return bloqueado;
+    }
 }

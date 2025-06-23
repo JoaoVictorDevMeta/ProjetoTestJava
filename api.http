@@ -1,19 +1,29 @@
 @baseUrl = http://localhost:8080
-@token = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0ZUBleGVtcGxvLmNvbSIsImlhdCI6MTc1MDY3OTgyOCwiZXhwIjoxNzUwNjgxNjI4fQ.9fkoZ0YV_yzRYZJJIcD72ynrHRbsI9Yy4R6bpMwsFt8
+@token = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwMCIsImlhdCI6MTc1MDY4NTY3MiwiZXhwIjoxNzUwNjg3NDcyfQ.6-Dh-koE4FrNIITcV7xzoBklnVChNV-cIUGsWJc5Mxc
 
 ### Welcome endpoint (GET)
 GET {{baseUrl}}/auth/welcome
 
 ###
-
-# Add new user (POST)
+# Add user 1
 POST {{baseUrl}}/auth/addNewUser
 Content-Type: application/json
 
 {
-  "email": "teste@exemplo.com",
+  "cpf": "12345678900",
   "password": "123456",
-  "roles": "ROLE_USER"
+  "dataNascimento": "1990-01-01"
+}
+
+###
+# Add user 2
+POST {{baseUrl}}/auth/addNewUser
+Content-Type: application/json
+
+{
+  "cpf": "09876543211",
+  "password": "123456",
+  "dataNascimento": "1990-02-02"
 }
 
 ###
@@ -22,7 +32,7 @@ POST http://localhost:8080/auth/generateToken
 Content-Type: application/json
 
 {
-  "username": "teste@exemplo.com",
+  "cpf": "12345678900",
   "password": "123456"
 }
 
@@ -36,3 +46,45 @@ Authorization: Bearer {{token}}
 # See account status
 GET http://localhost:8080/bank/consultar
 Authorization: Bearer {{token}}
+
+### 
+# See account extract
+GET http://localhost:8080/bank/extrato
+Authorization: Bearer {{token}}
+
+###
+#denunciar
+POST http://localhost:8080/bank/denunciar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "codigoTransacao": "TX123456",
+  "motivo": "Transação suspeita",
+  "detalhes": "O valor transferido não foi combinado.",
+  "cpfDenunciante": "12345678900",
+  "cpfDenunciado": "09876543211"
+}
+
+###
+#Depositar saldo em conta
+POST http://localhost:8080/bank/depositar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "cpfDestino": "12345678900",
+  "valor": 100.00
+}
+
+###
+#transferir
+POST http://localhost:8080/bank/transferir
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "cpfRemetente": "12345678900",
+  "cpfDestino": "09876543211",
+  "valor": 50.00
+}

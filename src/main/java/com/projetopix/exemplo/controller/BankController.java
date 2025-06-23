@@ -7,7 +7,11 @@ import com.projetopix.exemplo.service.TransactionService;
 import com.projetopix.exemplo.service.DenunciaService;
 import com.projetopix.exemplo.dto.ConsultaResponse;
 import com.projetopix.exemplo.service.UserInfoService;
+import com.projetopix.exemplo.entity.Transaction;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,10 +28,15 @@ public class BankController {
         return "Servidor do banco está funcionando corretamente!";
     }
 
-    //consultar saldo, score, selo verificado, bloqueio, etc. do usuário
     @GetMapping("/consultar")
     public ConsultaResponse consultar() {
         return userInfoService.consultarUsuarioAutenticado();
+    }
+
+    // consultar extrato (todas transações do usuário autenticado)
+    @GetMapping("/extrato")
+    public List<Transaction> extrato() {
+        return userInfoService.consultarExtratoUsuarioAutenticado();
     }
 
     @PostMapping("/depositar")
