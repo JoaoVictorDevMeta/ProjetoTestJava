@@ -7,6 +7,8 @@ import com.projetopix.exemplo.repository.DenunciaRepository;
 import com.projetopix.exemplo.repository.UserInfoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Date;
 
@@ -18,8 +20,15 @@ public class DenunciaService {
     private final UserInfoRepository userInfoRepository;
 
     public void denunciar(DenunciaRequest request) {
-        UserInfo denunciante = userInfoRepository.findByCpf(request.getCpfDenunciante())
+        // Pega o CPF do usuário autenticado
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String cpfAutenticado = auth.getName();
+
+        // Busca o denunciante pelo CPF autenticado
+        UserInfo denunciante = userInfoRepository.findByCpf(cpfAutenticado)
                 .orElseThrow(() -> new RuntimeException("Denunciante não encontrado!"));
+
+        // Busca o denunciado normalmente pelo request
         UserInfo denunciado = userInfoRepository.findByCpf(request.getCpfDenunciado())
                 .orElseThrow(() -> new RuntimeException("Denunciado não encontrado!"));
 
@@ -41,7 +50,7 @@ public class DenunciaService {
                 .build();
 
         denunciaRepository.save(denuncia);
-        
+
         // FALTA NOTIFICAÇÃO
     }
 

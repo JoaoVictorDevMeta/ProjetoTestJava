@@ -94,7 +94,6 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "cpfRemetente": "12345678900",
   "cpfDestino": "09876543211",
   "valor": 50.00
 }
