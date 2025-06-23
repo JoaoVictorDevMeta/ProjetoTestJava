@@ -60,6 +60,9 @@ public class TransactionService {
         UserInfo destinatario = userInfoRepository.findByCpf(request.getCpfDestino())
                 .orElseThrow(() -> new RuntimeException("Usuário destinatário não encontrado"));
 
+        if(remetente.getCpf().equals(destinatario.getCpf()))
+            throw new RuntimeException("Transferência não pode ser feita para a própria conta.");
+
         if (remetente.getScore() < 2.5 || (remetente.getBloqueado() != null && remetente.getBloqueado()))
             throw new RuntimeException("Conta remetente bloqueada para transferências.");
         if (destinatario.getScore() < 2.5 || (destinatario.getBloqueado() != null && destinatario.getBloqueado()))

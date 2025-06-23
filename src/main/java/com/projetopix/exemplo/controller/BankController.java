@@ -33,6 +33,11 @@ public class BankController {
         return userInfoService.consultarUsuarioAutenticado();
     }
 
+    @GetMapping("/consultar-usuario/{cpf}")
+    public ConsultaResponse consultarPorCpf(@PathVariable String cpf) {
+        return userInfoService.consultarPorCpf(cpf);
+    }
+
     //consultar denuncias feitas por ou para o usuário autenticado
     @GetMapping("/denuncias")
     public List<DenunciaRequest> consultarDenuncias() {

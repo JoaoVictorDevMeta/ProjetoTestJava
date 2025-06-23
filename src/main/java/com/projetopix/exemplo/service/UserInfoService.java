@@ -34,6 +34,7 @@ public class UserInfoService {
             throw new IllegalArgumentException("Data de nascimento é obrigatória!");
         }
         userInfo.setPassword(encoder.encode(userInfo.getPassword()));
+        userInfo.setName(userInfo.getName().toUpperCase());
         userInfo.setRoles("ROLE_USER");
         userInfo.setScore(5.0);
         userInfo.setSaldo(0.0);
@@ -49,12 +50,16 @@ public class UserInfoService {
 
     public ConsultaResponse consultarUsuarioAutenticado() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String cpf = auth.getName(); // Agora o username é o CPF
+        String cpf = auth.getName();
         var user = repository.findByCpf(cpf)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
         ConsultaResponse resp = new ConsultaResponse();
+        resp.setName(user.getName());
+        resp.setCpf(user.getCpf());
+        resp.setTipoConta(user.getTipoConta());
         resp.setSaldo(user.getSaldo());
+        resp.setRoles(user.getRoles());
         resp.setScore(user.getScore());
         resp.setSeloVerificado(user.getSeloVerificado());
         resp.setBloqueado(user.getScore() != null && user.getScore() < 2.5);
@@ -98,5 +103,21 @@ public class UserInfoService {
         user.setSeloVerificado("sim");
         repository.save(user);
         return "Selo verificado concedido!";
+    }
+
+    public ConsultaResponse consultarPorCpf(String cpf) {
+        var user = repository.findByCpf(cpf)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        ConsultaResponse resp = new ConsultaResponse();
+        resp.setName(user.getName());
+        resp.setCpf(user.getCpf());
+        resp.setTipoConta(user.getTipoConta());
+        resp.setRoles(user.getRoles());
+        resp.setSaldo(user.getSaldo());
+        resp.setScore(user.getScore());
+        resp.setSeloVerificado(user.getSeloVerificado());
+        resp.setBloqueado(user.getScore() != null && user.getScore() < 2.5);
+        return resp;
     }
 }

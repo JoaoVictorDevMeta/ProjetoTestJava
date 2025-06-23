@@ -24,6 +24,7 @@ public class AdminInitializer {
             UserInfo admin = UserInfo.builder()
                     .cpf(cpfAdmin)
                     .password(passwordEncoder.encode("123456"))
+                    .name("Admin")
                     .roles("ROLE_ADMIN")
                     .score(5.0)
                     .saldo(1000.0)

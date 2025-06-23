@@ -1,5 +1,5 @@
 @baseUrl = http://localhost:8080
-@token = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwMCIsImlhdCI6MTc1MDY4OTgzNCwiZXhwIjoxNzUwNjkxNjM0fQ.NUQPg_3mSm4F5QHiZSl8KPEg84nfk3lAwO0Ag9YwazE
+@token = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIwMDAwMDAwMDAwMCIsImlhdCI6MTc1MDcwNjQ2MSwiZXhwIjoxNzUwNzA4MjYxfQ.39fT471AfhuSxMOS8L14rkOTo1jDxzPWQdtGsMVPXzU
 
 ### Welcome endpoint (GET)
 GET {{baseUrl}}/auth/welcome
@@ -11,6 +11,7 @@ Content-Type: application/json
 
 {
   "cpf": "12345678900",
+  "name": "João Silva",
   "password": "123456",
   "dataNascimento": "1990-01-01"
 }
@@ -21,9 +22,20 @@ POST {{baseUrl}}/auth/addNewUser
 Content-Type: application/json
 
 {
+  "name": "Maria Oliveira",
   "cpf": "09876543211",
   "password": "123456",
   "dataNascimento": "1990-02-02"
+}
+
+### login user 1
+# @name login
+POST http://localhost:8080/auth/generateToken
+Content-Type: application/json
+
+{
+  "cpf": "12345678900",
+  "password": "123456"
 }
 
 ### login user 1
@@ -86,7 +98,7 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "cpfDestino": "12345678900",
+  "cpfDestino": "12059930456",
   "valor": 100.00
 }
 
