@@ -41,20 +41,40 @@ public class DenunciaService {
                 .build();
 
         denunciaRepository.save(denuncia);
-
-        // Atualiza o score do denunciado
-        double novoScore = denunciado.getScore() - 0.5;
-        if (novoScore < 0.0)
-            novoScore = 0.0;
-        denunciado.setScore(novoScore);
-
-        // Bloqueia se score < 2.5
-        denunciado.setBloqueado(novoScore < 2.5);
-
-        userInfoRepository.save(denunciado);
-
+        
         // FALTA NOTIFICAÇÃO
     }
 
-    // Métodos para justificar, aprovar, reprovar, etc.
+    public void atualizarStatusDenuncia(Long denunciaId, String status) {
+        Denuncia denuncia = denunciaRepository.findById(denunciaId)
+                .orElseThrow(() -> new RuntimeException("Denúncia não encontrada!"));
+
+        // Apenas aceita "aprovada" ou "invalidada"
+        if (!status.equalsIgnoreCase("aprovada") && !status.equalsIgnoreCase("invalidada")) {
+            throw new RuntimeException("Status inválido! Use 'aprovada' ou 'invalidada'.");
+        }
+
+        denuncia.setStatus(status.toLowerCase());
+        denunciaRepository.save(denuncia);
+
+        if (status.equalsIgnoreCase("aprovada")) {
+            // Reduz 0.3 do score do denunciado
+            UserInfo denunciado = denuncia.getDenunciado();
+            double novoScore = denunciado.getScore() - 0.3;
+            if (novoScore < 0.0)
+                novoScore = 0.0;
+            denunciado.setScore(novoScore);
+            denunciado.setBloqueado(novoScore < 2.5);
+            userInfoRepository.save(denunciado);
+        } else if (status.equalsIgnoreCase("invalidada")) {
+            // Reduz 0.1 do score do denunciante
+            UserInfo denunciante = denuncia.getDenunciante();
+            double novoScore = denunciante.getScore() - 0.1;
+            if (novoScore < 0.0)
+                novoScore = 0.0;
+            denunciante.setScore(novoScore);
+            denunciante.setBloqueado(novoScore < 2.5);
+            userInfoRepository.save(denunciante);
+        }
+    }
 }

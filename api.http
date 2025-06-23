@@ -1,5 +1,5 @@
 @baseUrl = http://localhost:8080
-@token = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwMCIsImlhdCI6MTc1MDY4NTY3MiwiZXhwIjoxNzUwNjg3NDcyfQ.6-Dh-koE4FrNIITcV7xzoBklnVChNV-cIUGsWJc5Mxc
+@token = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIwMDAwMDAwMDAwMCIsImlhdCI6MTc1MDY4NzczMywiZXhwIjoxNzUwNjg5NTMzfQ.8xlBj7hxiOBU8Q_02ieUSEP6ZQf2SAnW4Ib17m3SCmc
 
 ### Welcome endpoint (GET)
 GET {{baseUrl}}/auth/welcome
@@ -26,13 +26,23 @@ Content-Type: application/json
   "dataNascimento": "1990-02-02"
 }
 
-###
+### login user 1
 # @name login
 POST http://localhost:8080/auth/generateToken
 Content-Type: application/json
 
 {
   "cpf": "12345678900",
+  "password": "123456"
+}
+
+### login AMDIN
+# @name login
+POST http://localhost:8080/auth/generateToken
+Content-Type: application/json
+
+{
+  "cpf": "00000000000",
   "password": "123456"
 }
 
@@ -88,3 +98,16 @@ Content-Type: application/json
   "cpfDestino": "09876543211",
   "valor": 50.00
 }
+
+
+### ADMIN - Listar transações
+GET http://localhost:8080/admin/todos-extratos
+Authorization: Bearer {{token}}
+
+### ADMIN - Listar denuncias
+GET http://localhost:8080/admin/todas-denuncias
+Authorization: Bearer {{token}}
+
+### ADMIN - aprovar denuncia
+POST http://localhost:8080/admin/atualizar-denuncia?denunciaId=1&status=aprovada
+Authorization: Bearer {{token}}
