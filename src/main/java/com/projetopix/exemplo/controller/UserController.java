@@ -21,9 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserInfoService service;
-
     private final JwtService jwtService;
-
     private final AuthenticationManager authenticationManager;
 
     @GetMapping("/welcome")
