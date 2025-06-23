@@ -1,5 +1,5 @@
 @baseUrl = http://localhost:8080
-@token = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIwMDAwMDAwMDAwMCIsImlhdCI6MTc1MDY4NzczMywiZXhwIjoxNzUwNjg5NTMzfQ.8xlBj7hxiOBU8Q_02ieUSEP6ZQf2SAnW4Ib17m3SCmc
+@token = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwMCIsImlhdCI6MTc1MDY4OTgzNCwiZXhwIjoxNzUwNjkxNjM0fQ.NUQPg_3mSm4F5QHiZSl8KPEg84nfk3lAwO0Ag9YwazE
 
 ### Welcome endpoint (GET)
 GET {{baseUrl}}/auth/welcome
@@ -51,6 +51,10 @@ Content-Type: application/json
 GET http://localhost:8080/bank/status
 Authorization: Bearer {{token}}
 
+###
+# consultar denuncias feitas ao usuario
+GET http://localhost:8080/bank/denuncias
+Authorization: Bearer {{token}}
 
 ### 
 # See account status
@@ -72,7 +76,6 @@ Content-Type: application/json
   "codigoTransacao": "TX123456",
   "motivo": "Transação suspeita",
   "detalhes": "O valor transferido não foi combinado.",
-  "cpfDenunciante": "12345678900",
   "cpfDenunciado": "09876543211"
 }
 

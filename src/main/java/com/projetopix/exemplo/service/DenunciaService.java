@@ -9,7 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Date;
 
 @Service
@@ -97,5 +98,35 @@ public class DenunciaService {
 
         user.setSeloVerificado("sim");
         userInfoRepository.save(user);
+    }
+
+    public List<DenunciaRequest> consultarDenunciasUsuarioAutenticado() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String cpf = auth.getName();
+
+        // Busca denúncias feitas pelo usuário
+        List<Denuncia> feitas = denunciaRepository.findByDenuncianteCpf(cpf);
+        // Busca denúncias recebidas pelo usuário
+        List<Denuncia> recebidas = denunciaRepository.findByDenunciadoCpf(cpf);
+
+        List<DenunciaRequest> resultado = new ArrayList<>();
+
+        for (Denuncia d : feitas) {
+            DenunciaRequest req = new DenunciaRequest();
+            req.setCpfDenunciado(d.getDenunciado().getCpf());
+            req.setCodigoTransacao(d.getCodigoTransacao());
+            req.setMotivo(d.getMotivo());
+            req.setDetalhes(d.getDetalhes());
+            resultado.add(req);
+        }
+        for (Denuncia d : recebidas) {
+            DenunciaRequest req = new DenunciaRequest();
+            req.setCpfDenunciado(d.getDenunciado().getCpf());
+            req.setCodigoTransacao(d.getCodigoTransacao());
+            req.setMotivo(d.getMotivo());
+            req.setDetalhes(d.getDetalhes());
+            resultado.add(req);
+        }
+        return resultado;
     }
 }

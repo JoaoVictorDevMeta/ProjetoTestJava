@@ -8,6 +8,8 @@ import com.projetopix.exemplo.repository.TransactionRepository;
 import com.projetopix.exemplo.repository.UserInfoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Date;
 
@@ -49,7 +51,11 @@ public class TransactionService {
     }
 
     public void transferir(TransferenciaRequest request) {
-        UserInfo remetente = userInfoRepository.findByCpf(request.getCpfRemetente())
+        // Pega o CPF do usuário autenticado
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String cpfRemetente = auth.getName();
+
+        UserInfo remetente = userInfoRepository.findByCpf(cpfRemetente)
                 .orElseThrow(() -> new RuntimeException("Usuário remetente não encontrado"));
         UserInfo destinatario = userInfoRepository.findByCpf(request.getCpfDestino())
                 .orElseThrow(() -> new RuntimeException("Usuário destinatário não encontrado"));
@@ -59,21 +65,15 @@ public class TransactionService {
         if (destinatario.getScore() < 2.5 || (destinatario.getBloqueado() != null && destinatario.getBloqueado()))
             throw new RuntimeException("Conta destinatário bloqueada para receber transferências.");
 
-        // Cálculo da taxa de 1% =================================
-        // PODE SER OPCIONAL, APENAS COLOQUEI POR QUE ESTAVA NO OUTRO CODIGO
-        double taxa = request.getValor() * 0.01; // <-- TAXA DE 1%
+        double taxa = request.getValor() * 0.01; // TAXA DE 1%
         double valorTotal = request.getValor() + taxa;
-        // ========================================================
 
-        // Verifica saldo suficiente (incluindo a taxa)
         if (remetente.getSaldo() < valorTotal)
             throw new RuntimeException("Saldo insuficiente para transferência (incluindo taxa de 1%).");
 
-        // Realiza a transferência
-        remetente.setSaldo(remetente.getSaldo() - valorTotal); 
-        destinatario.setSaldo(destinatario.getSaldo() + request.getValor()); // Destinatário recebe valor integral
+        remetente.setSaldo(remetente.getSaldo() - valorTotal);
+        destinatario.setSaldo(destinatario.getSaldo() + request.getValor());
 
-        // Atualiza score
         double novoScoreDest = destinatario.getScore() + 0.1;
         if (novoScoreDest > 5.0)
             novoScoreDest = 5.0;
@@ -82,7 +82,6 @@ public class TransactionService {
         userInfoRepository.save(remetente);
         userInfoRepository.save(destinatario);
 
-        // Registra transação (deixe explícito na descrição o valor da taxa)
         Transaction tx = Transaction.builder()
                 .codigoTransacao(gerarCodigoTransacao())
                 .descricao("Transferência (taxa de 1%: " + String.format("%.2f", taxa) + ")")

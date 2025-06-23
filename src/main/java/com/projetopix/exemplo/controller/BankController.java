@@ -33,6 +33,12 @@ public class BankController {
         return userInfoService.consultarUsuarioAutenticado();
     }
 
+    //consultar denuncias feitas por ou para o usuário autenticado
+    @GetMapping("/denuncias")
+    public List<DenunciaRequest> consultarDenuncias() {
+        return denunciaService.consultarDenunciasUsuarioAutenticado();
+    }
+
     // consultar extrato (todas transações do usuário autenticado)
     @GetMapping("/extrato")
     public List<Transaction> extrato() {
