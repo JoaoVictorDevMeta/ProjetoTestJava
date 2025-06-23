@@ -45,4 +45,8 @@ public class UserInfo {
     public Boolean getBloqueado() {
         return bloqueado;
     }
+
+    public void setContaEmergenciaPercentual(Double contaEmergenciaPercentual) {
+        this.percentualSeguranca = contaEmergenciaPercentual;
+    }
 }

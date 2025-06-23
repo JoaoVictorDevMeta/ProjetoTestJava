@@ -8,7 +8,9 @@ import com.projetopix.exemplo.service.DenunciaService;
 import com.projetopix.exemplo.dto.ConsultaResponse;
 import com.projetopix.exemplo.service.UserInfoService;
 import com.projetopix.exemplo.entity.Transaction;
+import com.projetopix.exemplo.dto.EmergenciaConta;
 import lombok.RequiredArgsConstructor;
+import com.projetopix.exemplo.dto.NotificationResponse;
 
 import java.util.List;
 
@@ -29,8 +31,9 @@ public class BankController {
     }
 
     @GetMapping("/consultar")
-    public ConsultaResponse consultar() {
-        return userInfoService.consultarUsuarioAutenticado();
+    public ConsultaResponse consultar(@RequestHeader("Authorization") String authHeader) {
+         String token = authHeader.replace("Bearer ", "");
+        return userInfoService.consultarUsuarioAutenticado(token);
     }
 
     @GetMapping("/consultar-usuario/{cpf}")
@@ -38,7 +41,13 @@ public class BankController {
         return userInfoService.consultarPorCpf(cpf);
     }
 
-    //consultar denuncias feitas por ou para o usuário autenticado
+    // consultar notificações do usuário autenticado
+    @GetMapping("/notificacoes")
+    public List<NotificationResponse> consultarNotificacoes() {
+        return userInfoService.consultarNotificacoesUsuarioAutenticado();
+    }
+
+    // consultar denuncias feitas por ou para o usuário autenticado
     @GetMapping("/denuncias")
     public List<DenunciaRequest> consultarDenuncias() {
         return denunciaService.consultarDenunciasUsuarioAutenticado();
@@ -68,9 +77,15 @@ public class BankController {
         return "Denúncia registrada com sucesso!";
     }
 
-    //pedir selo verificado
+    // pedir selo verificado
     @PostMapping("/pedir-selo-verificado")
     public String pedirSeloVerificado() {
         return userInfoService.pedirSeloVerificado();
+    }
+
+    // definir conta de emergencia (segunda senha e percentual)
+    @PostMapping("/definir-conta-emergencia")
+    public String definirContaEmergencia(@RequestBody EmergenciaConta request) {
+        return userInfoService.definirContaEmergencia(request);
     }
 }

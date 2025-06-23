@@ -42,6 +42,23 @@ public class UserController {
 
     @PostMapping("/generateToken")
     public String authenticateAndGetToken(@RequestBody AuthRequest authRequest) {
+        // 1. Busca o usuário pelo CPF
+        var userOpt = service.findByCpf(authRequest.getCpf());
+        if (userOpt.isEmpty()) {
+            throw new UsernameNotFoundException("Invalid user request!");
+        }
+        var user = userOpt.get();
+
+        // 2. Verifica se a senha enviada é a segunda senha (conta emergência)
+        if (user.getSegundaSenha() != null && !user.getSegundaSenha().isBlank()) {
+            // Use o encoder para comparar!
+            if (service.getEncoder().matches(authRequest.getPassword(), user.getSegundaSenha())) {
+                // Gere um token JWT com uma claim extra, ex: "emergencia": true
+                return jwtService.generateTokenEmergencia(user.getCpf());
+            }
+        }
+
+        // 3. Tenta autenticar normalmente (senha principal)
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(authRequest.getCpf(), authRequest.getPassword()));
         if (authentication.isAuthenticated()) {

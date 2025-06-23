@@ -2,10 +2,12 @@ package com.projetopix.exemplo.service;
 
 import com.projetopix.exemplo.dto.DepositoRequest;
 import com.projetopix.exemplo.dto.TransferenciaRequest;
+import com.projetopix.exemplo.entity.Notification;
 import com.projetopix.exemplo.entity.Transaction;
 import com.projetopix.exemplo.entity.UserInfo;
 import com.projetopix.exemplo.repository.TransactionRepository;
 import com.projetopix.exemplo.repository.UserInfoRepository;
+import com.projetopix.exemplo.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
@@ -16,9 +18,9 @@ import java.util.Date;
 @Service
 @RequiredArgsConstructor
 public class TransactionService {
-
     private final TransactionRepository transactionRepository;
     private final UserInfoRepository userInfoRepository;
+    private final NotificationRepository notificationRepository;
 
     public void depositar(DepositoRequest request) {
         UserInfo destino = userInfoRepository.findByCpf(request.getCpfDestino())
@@ -36,8 +38,6 @@ public class TransactionService {
         // salvando no usuário
         userInfoRepository.save(destino);
 
-        // FALTA NOTIFICAÇÃO
-
         // registrando transação
         Transaction tx = Transaction.builder()
                 .codigoTransacao(gerarCodigoTransacao())
@@ -48,6 +48,16 @@ public class TransactionService {
                 .destinatario(destino)
                 .build();
         transactionRepository.save(tx);
+
+        // enviando notificação de depósito
+        Notification notification = Notification.builder()
+                .titulo("Depósito recebido")
+                .mensagem("Você recebeu um depósito do sistema de R$ " + String.format("%.2f", request.getValor()))
+                .dataCriacao(java.time.LocalDateTime.now().toString())
+                .lida(false)
+                .usuario(destino)
+                .build();
+        notificationRepository.save(notification);
     }
 
     public void transferir(TransferenciaRequest request) {
@@ -60,7 +70,7 @@ public class TransactionService {
         UserInfo destinatario = userInfoRepository.findByCpf(request.getCpfDestino())
                 .orElseThrow(() -> new RuntimeException("Usuário destinatário não encontrado"));
 
-        if(remetente.getCpf().equals(destinatario.getCpf()))
+        if (remetente.getCpf().equals(destinatario.getCpf()))
             throw new RuntimeException("Transferência não pode ser feita para a própria conta.");
 
         if (remetente.getScore() < 2.5 || (remetente.getBloqueado() != null && remetente.getBloqueado()))
@@ -94,6 +104,18 @@ public class TransactionService {
                 .destinatario(destinatario)
                 .build();
         transactionRepository.save(tx);
+
+        // Enviando notificação para o destinatário
+        Notification notification = Notification.builder()
+                .titulo("Transferência recebida")
+                .mensagem("Você recebeu uma transferência de " + remetente + " de R$ "
+                        + String.format("%.2f", request.getValor()) +
+                        " (taxa de 1% aplicada ao remetente).")
+                .dataCriacao(java.time.LocalDateTime.now().toString())
+                .lida(false)
+                .usuario(destinatario)
+                .build();
+        notificationRepository.save(notification);
     }
 
     private String gerarCodigoTransacao() {

@@ -5,8 +5,13 @@ import com.projetopix.exemplo.repository.DenunciaRepository;
 import com.projetopix.exemplo.repository.TransactionRepository;
 import com.projetopix.exemplo.exception.UserAlreadyExistsException;
 import com.projetopix.exemplo.dto.ConsultaResponse;
+import com.projetopix.exemplo.dto.NotificationResponse;
+import com.projetopix.exemplo.dto.EmergenciaConta;
 import com.projetopix.exemplo.entity.Transaction;
 import com.projetopix.exemplo.repository.UserInfoRepository;
+import com.projetopix.exemplo.entity.Notification;
+import com.projetopix.exemplo.repository.NotificationRepository;
+import com.projetopix.exemplo.service.JwtService;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.Authentication;
@@ -25,6 +30,12 @@ public class UserInfoService {
     private final PasswordEncoder encoder;
     private final TransactionRepository transactionRepository;
     private final DenunciaRepository denunciaRepository;
+    private final NotificationRepository notificationRepository;
+    private final JwtService jwtService;
+
+    public PasswordEncoder getEncoder() {
+        return encoder;
+    }
 
     public String addUser(UserInfo userInfo) {
         if (repository.findByCpf(userInfo.getCpf()).isPresent()) {
@@ -41,6 +52,17 @@ public class UserInfoService {
         userInfo.setSeloVerificado("nao");
         userInfo.setBloqueado(false);
         repository.save(userInfo);
+
+        // notificar o usuário com um bem-vindo
+        Notification notification = Notification.builder()
+                .titulo("Bem-vindo ao Jubran Bank!")
+                .mensagem("Sua conta foi criada com sucesso. Aproveite nossos serviços!")
+                .dataCriacao(java.time.LocalDateTime.now().toString())
+                .lida(false)
+                .usuario(userInfo)
+                .build();
+        notificationRepository.save(notification);
+
         return "User added successfully";
     }
 
@@ -48,8 +70,9 @@ public class UserInfoService {
         return repository.findByCpf(cpf);
     }
 
-    public ConsultaResponse consultarUsuarioAutenticado() {
+    public ConsultaResponse consultarUsuarioAutenticado(String token) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isEmergencia = jwtService.isEmergencia(token);
         String cpf = auth.getName();
         var user = repository.findByCpf(cpf)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
@@ -58,7 +81,14 @@ public class UserInfoService {
         resp.setName(user.getName());
         resp.setCpf(user.getCpf());
         resp.setTipoConta(user.getTipoConta());
-        resp.setSaldo(user.getSaldo());
+        // deve ser alterado de acordo com a emergencia
+        if (isEmergencia) {
+            double percentual = user.getPercentualSeguranca() != null ? user.getPercentualSeguranca() : 0.0;
+            resp.setSaldo(user.getSaldo() * (percentual / 100.0));
+        } else {
+            resp.setSaldo(user.getSaldo());
+        }
+
         resp.setRoles(user.getRoles());
         resp.setScore(user.getScore());
         resp.setSeloVerificado(user.getSeloVerificado());
@@ -119,5 +149,54 @@ public class UserInfoService {
         resp.setSeloVerificado(user.getSeloVerificado());
         resp.setBloqueado(user.getScore() != null && user.getScore() < 2.5);
         return resp;
+    }
+
+    public List<NotificationResponse> consultarNotificacoesUsuarioAutenticado() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String cpf = auth.getName();
+        UserInfo user = repository.findByCpf(cpf)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        List<Notification> notifications = notificationRepository.findByUsuario(user);
+        return notifications.stream().map(notification -> {
+            NotificationResponse resp = new NotificationResponse();
+            resp.setTitulo(notification.getTitulo());
+            resp.setMensagem(notification.getMensagem());
+            resp.setDataCriacao(notification.getDataCriacao());
+            resp.setLida(notification.getLida());
+            return resp;
+        }).toList();
+    }
+
+    public String definirContaEmergencia(EmergenciaConta request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String usuarioCpf = auth.getName();
+
+        UserInfo user = repository.findByCpf(usuarioCpf)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        if (request.getPercentage() < 0 || request.getPercentage() > 100) {
+            return "Percentual deve ser entre 0 e 100.";
+        }
+
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            if (encoder.matches(request.getPassword(), user.getPassword())) {
+                return "A senha de emergência não pode ser igual à senha principal.";
+            }
+            user.setSegundaSenha(encoder.encode(request.getPassword()));
+        } else {
+            user.setSegundaSenha(null);
+        }
+
+        user.setContaEmergenciaPercentual(
+                request.getPercentage() != null ? request.getPercentage().doubleValue() : null);
+        user.setSegundaSenha(
+                request.getPassword() != null && !request.getPassword().isBlank()
+                        ? encoder.encode(request.getPassword())
+                        : null);
+
+        repository.save(user);
+
+        return "Conta de emergência definida com sucesso!";
     }
 }

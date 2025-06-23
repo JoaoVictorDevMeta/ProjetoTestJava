@@ -24,6 +24,10 @@ public class JwtService {
         return createToken(claims, email);
     }
 
+    public String generateToken(Map<String, Object> claims, String subject) {
+        return createToken(claims, subject);
+    }
+
     private String createToken(Map<String, Object> claims, String email) {
         return Jwts.builder()
                 .setClaims(claims)
@@ -67,5 +71,17 @@ public class JwtService {
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+
+    public String generateTokenEmergencia(String cpf) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("emergencia", true);
+        return generateToken(claims, cpf);
+    }
+
+    public boolean isEmergencia(String token) {
+        Claims claims = extractAllClaims(token);
+        Object emergencia = claims.get("emergencia");
+        return emergencia != null && Boolean.TRUE.equals(emergencia);
     }
 }
