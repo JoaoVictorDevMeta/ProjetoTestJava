@@ -1,0 +1,32 @@
+# Welcome endpoint (GET)
+GET http://localhost:8080/auth/welcome
+
+###
+
+# Add new user (POST)
+POST http://localhost:8080/auth/addNewUser
+Content-Type: application/json
+
+{
+  "email": "teste@exemplo.com",
+  "password": "123456",
+  "roles": "ROLE_USER"
+}
+
+###
+
+# Generate token (POST) and save it as a variable
+POST http://localhost:8080/auth/generateToken
+Content-Type: application/json
+
+{
+  "username": "teste@exemplo.com",
+  "password": "123456"
+}
+> {% client.global.set("jwt_token", response.body.token) %}
+
+###
+
+# Protected endpoint example (GET) - uses the saved token
+GET http://localhost:8080/auth/user/userProfile
+Authorization: Bearer {{jwt_token}}
