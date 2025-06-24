@@ -35,6 +35,7 @@ public class UserInfo {
     private Double saldo;
     private Double score;
     private String segundaSenha;
+    private Double contaEmergenciaSaldo;
     private String chaveDeposito;
     private Double percentualSeguranca;
 

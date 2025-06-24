@@ -11,7 +11,6 @@ import com.projetopix.exemplo.entity.Transaction;
 import com.projetopix.exemplo.repository.UserInfoRepository;
 import com.projetopix.exemplo.entity.Notification;
 import com.projetopix.exemplo.repository.NotificationRepository;
-import com.projetopix.exemplo.service.JwtService;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.Authentication;
@@ -83,8 +82,7 @@ public class UserInfoService {
         resp.setTipoConta(user.getTipoConta());
         // deve ser alterado de acordo com a emergencia
         if (isEmergencia) {
-            double percentual = user.getPercentualSeguranca() != null ? user.getPercentualSeguranca() : 0.0;
-            resp.setSaldo(user.getSaldo() * (percentual / 100.0));
+            resp.setSaldo(user.getContaEmergenciaSaldo() != null ? user.getContaEmergenciaSaldo() : 0.0);
         } else {
             resp.setSaldo(user.getSaldo());
         }
@@ -118,7 +116,7 @@ public class UserInfoService {
 
         long qtdTransacoes = transactionRepository.findByRemetenteOrDestinatario(user, user).size();
         if (qtdTransacoes < 20) {
-            return "Usuário precisa de pelo menos 20 transações para solicitar o selo.";
+            throw new RuntimeException("Usuário precisa de pelo menos 20 transações para solicitar o selo.");
         }
 
         // Use o repository para buscar denúncias aprovadas
@@ -127,12 +125,10 @@ public class UserInfoService {
                 .isEmpty();
 
         if (temDenunciaAprovada) {
-            return "Usuário não pode solicitar selo pois possui denúncia aprovada.";
+            throw new RuntimeException("Usuário não pode solicitar selo pois possui denúncia aprovada.");
         }
 
-        user.setSeloVerificado("sim");
-        repository.save(user);
-        return "Selo verificado concedido!";
+        return "Selo verificado enviado para aprovação";
     }
 
     public ConsultaResponse consultarPorCpf(String cpf) {
@@ -176,12 +172,12 @@ public class UserInfoService {
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
         if (request.getPercentage() < 0 || request.getPercentage() > 100) {
-            return "Percentual deve ser entre 0 e 100.";
+            throw new RuntimeException("Percentual deve ser entre 0 e 100.");
         }
 
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             if (encoder.matches(request.getPassword(), user.getPassword())) {
-                return "A senha de emergência não pode ser igual à senha principal.";
+                throw new RuntimeException("A senha de emergência não pode ser igual à senha principal.");
             }
             user.setSegundaSenha(encoder.encode(request.getPassword()));
         } else {
@@ -194,9 +190,16 @@ public class UserInfoService {
                 request.getPassword() != null && !request.getPassword().isBlank()
                         ? encoder.encode(request.getPassword())
                         : null);
+        user.setContaEmergenciaSaldo(
+                user.getSaldo()
+                        * (user.getPercentualSeguranca() != null ? user.getPercentualSeguranca() / 100.0 : 0.0));
 
         repository.save(user);
 
         return "Conta de emergência definida com sucesso!";
+    }
+
+    public void saveUser(UserInfo user) {
+        repository.save(user);
     }
 }

@@ -1,5 +1,5 @@
 @baseUrl = http://localhost:8080
-@token = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwMCIsImlhdCI6MTc1MDcxNzk4OSwiZXhwIjoxNzUwNzE5Nzg5fQ.WxzbNX9YRuiM59kCvd8nvFoE0kKXA2RBYLqOwwaGPA0
+@token = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjA1OTkzMDQ1NiIsImlhdCI6MTc1MDcyNzQyOCwiZXhwIjoxNzUwNzI5MjI4fQ.ehKzAIYywZqRsqEsAE8K1zF_W_Tn-Pg4LiOwC9osYeA
 
 ### Welcome endpoint (GET)
 GET {{baseUrl}}/auth/welcome
@@ -34,7 +34,7 @@ POST http://localhost:8080/auth/generateToken
 Content-Type: application/json
 
 {
-  "cpf": "12345678900",
+  "cpf": "12059930456",
   "password": "123456"
 }
 
@@ -44,7 +44,7 @@ POST http://localhost:8080/auth/generateToken
 Content-Type: application/json
 
 {
-  "cpf": "12345678900",
+  "cpf": "12059930456",
   "password": "123456"
 }
 
@@ -103,7 +103,7 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "cpfDestino": "12345678900",
+  "cpfDestino": "12059930456",
   "valor": 100.00
 }
 
@@ -115,7 +115,7 @@ Content-Type: application/json
 
 {
   "cpfDestino": "09876543211",
-  "valor": 50.00
+  "valor": 40.00
 }
 
 ###
@@ -126,7 +126,7 @@ Content-Type: application/json
 
 {
   "percentage": 50,
-  "password": "123123"
+  "password": "123456"
 }
 
 ### ADMIN - Listar transações

@@ -32,7 +32,7 @@ public class BankController {
 
     @GetMapping("/consultar")
     public ConsultaResponse consultar(@RequestHeader("Authorization") String authHeader) {
-         String token = authHeader.replace("Bearer ", "");
+        String token = authHeader.replace("Bearer ", "");
         return userInfoService.consultarUsuarioAutenticado(token);
     }
 
@@ -66,8 +66,10 @@ public class BankController {
     }
 
     @PostMapping("/transferir")
-    public String transferir(@RequestBody TransferenciaRequest request) {
-        transactionService.transferir(request);
+    public String transferir(@RequestBody TransferenciaRequest request,
+            @RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        transactionService.transferir(request, token);
         return "Transferência realizada com sucesso!";
     }
 

@@ -53,7 +53,12 @@ public class UserController {
         if (user.getSegundaSenha() != null && !user.getSegundaSenha().isBlank()) {
             // Use o encoder para comparar!
             if (service.getEncoder().matches(authRequest.getPassword(), user.getSegundaSenha())) {
-                // Gere um token JWT com uma claim extra, ex: "emergencia": true
+                // Atualiza o saldo de emergência antes de gerar o token
+                Double percentual = user.getPercentualSeguranca() != null ? user.getPercentualSeguranca() : 0.0;
+                Double saldoEmergencia = user.getSaldo() * (percentual / 100.0);
+                user.setContaEmergenciaSaldo(saldoEmergencia);
+                service.saveUser(user); 
+
                 return jwtService.generateTokenEmergencia(user.getCpf());
             }
         }

@@ -21,6 +21,7 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final UserInfoRepository userInfoRepository;
     private final NotificationRepository notificationRepository;
+    private final JwtService jwtService;
 
     public void depositar(DepositoRequest request) {
         UserInfo destino = userInfoRepository.findByCpf(request.getCpfDestino())
@@ -60,7 +61,7 @@ public class TransactionService {
         notificationRepository.save(notification);
     }
 
-    public void transferir(TransferenciaRequest request) {
+    public void transferir(TransferenciaRequest request, String token) {
         // Pega o CPF do usuário autenticado
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String cpfRemetente = auth.getName();
@@ -78,13 +79,26 @@ public class TransactionService {
         if (destinatario.getScore() < 2.5 || (destinatario.getBloqueado() != null && destinatario.getBloqueado()))
             throw new RuntimeException("Conta destinatário bloqueada para receber transferências.");
 
+        // Verifica se está em modo emergência
+        boolean isEmergencia = jwtService.isEmergencia(token);
+        double saldoDisponivel = remetente.getSaldo();
+        double saldoCompleto = remetente.getSaldo();
+
+        if (isEmergencia && remetente.getContaEmergenciaSaldo() != null) {
+            saldoDisponivel = remetente.getContaEmergenciaSaldo();
+        }
+
         double taxa = request.getValor() * 0.01; // TAXA DE 1%
         double valorTotal = request.getValor() + taxa;
 
-        if (remetente.getSaldo() < valorTotal)
+        if (saldoDisponivel < valorTotal)
             throw new RuntimeException("Saldo insuficiente para transferência (incluindo taxa de 1%).");
 
-        remetente.setSaldo(remetente.getSaldo() - valorTotal);
+        remetente.setSaldo(saldoCompleto - valorTotal);
+        
+        if (isEmergencia && remetente.getContaEmergenciaSaldo() != null) {
+            remetente.setContaEmergenciaSaldo(saldoDisponivel - valorTotal);
+        }
         destinatario.setSaldo(destinatario.getSaldo() + request.getValor());
 
         double novoScoreDest = destinatario.getScore() + 0.1;
@@ -108,7 +122,7 @@ public class TransactionService {
         // Enviando notificação para o destinatário
         Notification notification = Notification.builder()
                 .titulo("Transferência recebida")
-                .mensagem("Você recebeu uma transferência de " + remetente + " de R$ "
+                .mensagem("Você recebeu uma transferência de " + remetente.getName() + " de R$ "
                         + String.format("%.2f", request.getValor()) +
                         " (taxa de 1% aplicada ao remetente).")
                 .dataCriacao(java.time.LocalDateTime.now().toString())
