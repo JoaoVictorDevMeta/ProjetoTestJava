@@ -95,11 +95,16 @@ public class TransactionService {
             throw new RuntimeException("Saldo insuficiente para transferência (incluindo taxa de 1%).");
 
         remetente.setSaldo(saldoCompleto - valorTotal);
-        
+
         if (isEmergencia && remetente.getContaEmergenciaSaldo() != null) {
             remetente.setContaEmergenciaSaldo(saldoDisponivel - valorTotal);
         }
         destinatario.setSaldo(destinatario.getSaldo() + request.getValor());
+
+        UserInfo admin = userInfoRepository.findByCpf("00000000000")
+                .orElseThrow(() -> new RuntimeException("Conta ADMIN não encontrada"));
+        admin.setSaldo(admin.getSaldo() + taxa);
+        userInfoRepository.save(admin);
 
         double novoScoreDest = destinatario.getScore() + 0.1;
         if (novoScoreDest > 5.0)

@@ -27,7 +27,7 @@ public class AdminInitializer {
                     .name("Admin")
                     .roles("ROLE_ADMIN")
                     .score(5.0)
-                    .saldo(1000.0)
+                    .saldo(1500.0)
                     .seloVerificado("sim")
                     .bloqueado(false)
                     .dataNascimento("2000-01-01") 
