@@ -2,9 +2,12 @@ package com.projetopix.exemplo.service;
 
 import com.projetopix.exemplo.dto.DenunciaRequest;
 import com.projetopix.exemplo.entity.Denuncia;
+import com.projetopix.exemplo.entity.Notification;
 import com.projetopix.exemplo.entity.UserInfo;
 import com.projetopix.exemplo.repository.DenunciaRepository;
+import com.projetopix.exemplo.repository.NotificationRepository;
 import com.projetopix.exemplo.repository.UserInfoRepository;
+import com.projetopix.exemplo.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
@@ -19,6 +22,8 @@ public class DenunciaService {
 
     private final DenunciaRepository denunciaRepository;
     private final UserInfoRepository userInfoRepository;
+    private final TransactionRepository transactionRepository;
+    private final NotificationRepository notificationRepository;
 
     public void denunciar(DenunciaRequest request) {
         // Pega o CPF do usuário autenticado
@@ -40,6 +45,11 @@ public class DenunciaService {
             throw new RuntimeException("Motivo da denúncia é obrigatório!");
         }
 
+        boolean transacaoExiste = transactionRepository.findByCodigoTransacao(request.getCodigoTransacao()).isPresent();
+        if (!transacaoExiste) {
+            throw new RuntimeException("Código de transação inválido!");
+        }
+
         Denuncia denuncia = Denuncia.builder()
                 .codigoTransacao(request.getCodigoTransacao())
                 .motivo(request.getMotivo())
@@ -52,7 +62,15 @@ public class DenunciaService {
 
         denunciaRepository.save(denuncia);
 
-        // FALTA NOTIFICAÇÃO
+        Notification notification = Notification.builder()
+                .titulo("Denúncia registrada")
+                .mensagem("sua denúncia para " + denunciado.getName()
+                        + " foi registrada com sucesso. A equipe Jubran Bank irá analisar em breve.")
+                .dataCriacao(java.time.LocalDateTime.now().toString())
+                .lida(false)
+                .usuario(denunciante)
+                .build();
+        notificationRepository.save(notification);
     }
 
     public void atualizarStatusDenuncia(Long denunciaId, String status) {
@@ -68,13 +86,36 @@ public class DenunciaService {
         denunciaRepository.save(denuncia);
 
         if (status.equalsIgnoreCase("aprovada")) {
-            // Reduz 0.3 do score do denunciado
+            // Reduz 0.5 do score do denunciado
             UserInfo denunciado = denuncia.getDenunciado();
-            double novoScore = denunciado.getScore() - 0.3;
+            double novoScore = denunciado.getScore() - 0.5;
             if (novoScore < 0.0)
                 novoScore = 0.0;
             denunciado.setScore(novoScore);
-            denunciado.setBloqueado(novoScore < 2.5);
+
+            if (novoScore < 2.5) {
+                Notification notification = Notification.builder()
+                        .titulo("CONTA BLOQUEADA")
+                        .mensagem("Devido a múltiplas denúncias, sua conta foi bloqueada. "
+                                + "Entre em contato com o suporte para mais informações.")
+                        .dataCriacao(java.time.LocalDateTime.now().toString())
+                        .lida(false)
+                        .usuario(denunciado)
+                        .build();
+                notificationRepository.save(notification);
+                denunciado.setBloqueado(true);
+            } else {
+                Notification notification = Notification.builder()
+                        .titulo("Denúncia aprovada")
+                        .mensagem("Sua denúncia contra " + denunciado.getName()
+                                + " foi aprovada. O Jubran Bank está tomando as medidas necessárias.")
+                        .dataCriacao(java.time.LocalDateTime.now().toString())
+                        .lida(false)
+                        .usuario(denuncia.getDenunciante())
+                        .build();
+                notificationRepository.save(notification);
+            }
+        
             userInfoRepository.save(denunciado);
         } else if (status.equalsIgnoreCase("invalidada")) {
             // Reduz 0.1 do score do denunciante
@@ -83,7 +124,29 @@ public class DenunciaService {
             if (novoScore < 0.0)
                 novoScore = 0.0;
             denunciante.setScore(novoScore);
-            denunciante.setBloqueado(novoScore < 2.5);
+
+             if (novoScore < 2.5) {
+                Notification notification = Notification.builder()
+                        .titulo("CONTA BLOQUEADA")
+                        .mensagem("Devido a múltiplas denúncias, sua conta foi bloqueada. "
+                                + "Entre em contato com o suporte para mais informações.")
+                        .dataCriacao(java.time.LocalDateTime.now().toString())
+                        .lida(false)
+                        .usuario(denunciante)
+                        .build();
+                notificationRepository.save(notification);
+                denunciante.setBloqueado(true);
+            } else {
+                Notification notification = Notification.builder()
+                        .titulo("Denúncia invalidada")
+                        .mensagem("Sua denúncia contra " + denuncia.getDenunciado().getName()
+                                + " foi invalidada. O Jubran Bank não encontrou evidências suficientes.")
+                        .dataCriacao(java.time.LocalDateTime.now().toString())
+                        .lida(false)
+                        .usuario(denunciante)
+                        .build();
+                notificationRepository.save(notification);
+            }
             userInfoRepository.save(denunciante);
         }
     }

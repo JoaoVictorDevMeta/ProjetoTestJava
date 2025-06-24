@@ -73,7 +73,7 @@ public class UserInfoService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean isEmergencia = jwtService.isEmergencia(token);
         String cpf = auth.getName();
-        var user = repository.findByCpf(cpf)
+        UserInfo user = repository.findByCpf(cpf)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
         ConsultaResponse resp = new ConsultaResponse();
@@ -85,6 +85,19 @@ public class UserInfoService {
             resp.setSaldo(user.getContaEmergenciaSaldo() != null ? user.getContaEmergenciaSaldo() : 0.0);
         } else {
             resp.setSaldo(user.getSaldo());
+        }
+
+        // ==================
+        // simulando selo simples
+        long qtdTransacoes = transactionRepository.findByRemetenteOrDestinatario(user, user).size();
+        boolean temDenunciaAprovada = !denunciaRepository
+                .findByDenunciadoCpfAndStatus(user.getCpf(), "aprovada")
+                .isEmpty();
+
+        if (qtdTransacoes >= 5 && !temDenunciaAprovada) {
+            user.setSeloVerificado("sim");
+        } else {
+            user.setSeloVerificado("nao");
         }
 
         resp.setRoles(user.getRoles());
@@ -115,8 +128,8 @@ public class UserInfoService {
         }
 
         long qtdTransacoes = transactionRepository.findByRemetenteOrDestinatario(user, user).size();
-        if (qtdTransacoes < 20) {
-            throw new RuntimeException("Usuário precisa de pelo menos 20 transações para solicitar o selo.");
+        if (qtdTransacoes < 5) {
+            throw new RuntimeException("Usuário precisa de pelo menos 5 transações para solicitar o selo.");
         }
 
         // Use o repository para buscar denúncias aprovadas
@@ -132,10 +145,22 @@ public class UserInfoService {
     }
 
     public ConsultaResponse consultarPorCpf(String cpf) {
-        var user = repository.findByCpf(cpf)
+        UserInfo user = repository.findByCpf(cpf)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
         ConsultaResponse resp = new ConsultaResponse();
+
+        long qtdTransacoes = transactionRepository.findByRemetenteOrDestinatario(user, user).size();
+        boolean temDenunciaAprovada = !denunciaRepository
+                .findByDenunciadoCpfAndStatus(user.getCpf(), "aprovada")
+                .isEmpty();
+
+        if (qtdTransacoes >= 5 && !temDenunciaAprovada) {
+            user.setSeloVerificado("sim");
+        } else {
+            user.setSeloVerificado("nao");
+        }
+
         resp.setName(user.getName());
         resp.setCpf(user.getCpf());
         resp.setTipoConta(user.getTipoConta());
